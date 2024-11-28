@@ -14,7 +14,6 @@ charset-normalizer
 colorama
 contourpy
 cycler
-Djangoocopt
 ensembleev1
 flatbuffers5
 fonttools
