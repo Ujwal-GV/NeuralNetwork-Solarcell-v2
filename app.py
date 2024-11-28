@@ -4,8 +4,10 @@ import test
 import matplotlib
 import os
 matplotlib.use('Agg')
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 def save_image(image_file):
     # Define the directory where you want to save the images

@@ -64,3 +64,4 @@ tzdata==2023.3
 urllib3==2.2.1
 Werkzeug==3.0.2
 wrapt==1.16.0
+Flask-Cors==5.0.0
