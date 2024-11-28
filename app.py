@@ -3,14 +3,18 @@ import train_model
 import test
 import matplotlib
 import os
-matplotlib.use('Agg')
 from flask_cors import CORS
 
-app = Flask(__name__)
-CORS(app)
+# Configure Matplotlib to work in a server environment
+matplotlib.use('Agg')
 
+# Initialize Flask app
+app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
+
+# Helper function to save uploaded images
 def save_image(image_file):
-    # Define the directory where you want to save the images
+    # Define the directory where images will be saved
     upload_dir = 'uploads'
     if not os.path.exists(upload_dir):
         os.makedirs(upload_dir)
@@ -21,6 +25,12 @@ def save_image(image_file):
     
     return image_path
 
+# Validate allowed file extensions for image uploads
+def allowed_file(filename):
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# Define routes
 @app.route('/')
 def login_page():
     return render_template('login.html')
@@ -52,16 +62,33 @@ def predict():
 
 @app.route('/train_model', methods=['POST'])
 def train():
-    train_model.process()
-    return jsonify({'message': 'Training completed successfully'})
+    try:
+        train_model.process()
+        return jsonify({'message': 'Training completed successfully'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/test', methods=['POST'])
 def predict_image():
-    image_file = request.files['image']
-    image_path = save_image(image_file)  # Save the image and get its path
-    prediction = test.predict_process(image_path)
-    return jsonify({'prediction': prediction})
+    try:
+        # Get the uploaded image file
+        image_file = request.files.get('image')
+        if not image_file:
+            return jsonify({'error': 'No file provided'}), 400
+        if not allowed_file(image_file.filename):
+            return jsonify({'error': 'Unsupported file type'}), 400
 
+        # Save the image and get its path
+        image_path = save_image(image_file)
+        
+        # Get prediction result
+        prediction = test.predict_process(image_path)
+        return jsonify({'prediction': prediction})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Run the app
 if __name__ == '__main__':
-    app.run(debug=True)
-    app.run(threaded=False)
+    import os
+    port = int(os.environ.get('PORT', 5000))  # Use the port defined in environment variables or default to 5000
+    app.run(host='0.0.0.0', port=port, debug=True, threaded=False)
