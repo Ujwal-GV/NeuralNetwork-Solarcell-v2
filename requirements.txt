@@ -9,3 +9,5 @@ matplotlib
 keras
 scikit-learn
 scipy
+opencv-python-headless
+opencv-contrib-python
