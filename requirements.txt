@@ -14,7 +14,7 @@ charset-normalizer
 colorama
 contourpy
 cycler
-ensembleev1
+ensembleev1==0.0.dev1
 flatbuffers5
 fonttools
 gast
