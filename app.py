@@ -42,8 +42,11 @@ def login():
         password = request.form.get('password')
         if username == 'UG' and password == 'UG2002':
             return redirect(url_for('index'))
-        else:
-            error_message = "Incorrect username or password. Please try again."
+        elif username == 'UG' and password != 'UG2002':
+            error_message = "Incorrect password. Please try again."
+            return render_template('login.html', error=error_message)
+        elif username != 'UG':
+            error_message = "Incorrect username. Please try again."
             return render_template('login.html', error=error_message)
     else:
         return render_template('login.html')

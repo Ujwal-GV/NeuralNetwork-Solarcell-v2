@@ -5,16 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Solar Panel Defect Detection - Prediction</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-</head>
-
 <style>
     .container {
-    width: 80%;
-    margin: 50px auto;
-    padding: 20px;
-    background-color: #ffffff;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        width: 80%;
+        margin: 50px auto;
+        padding: 20px;
+        background-color: #ffffff;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
 
     h1 {
@@ -48,6 +46,7 @@
         border-radius: 5px;
         background-color: #f8f8f8;
         cursor: pointer;
+        text-align: center;
     }
 
     .file-label:hover {
@@ -63,6 +62,7 @@
         cursor: pointer;
         border-radius: 5px;
         transition: background-color 0.3s ease;
+        margin: 5px;
     }
 
     button:hover {
@@ -83,23 +83,56 @@
     .image-preview img {
         max-width: 100%;
         height: auto;
+        border-radius: 5px;
+    }
+
+    .loading {
+        display: none;
+        text-align: center;
+        font-weight: bold;
+        margin-top: 20px;
+        color: #2F4F4F;
+    }
+
+    @media (max-width: 768px) {
+        .container {
+            width: 100%;
+            padding: 15px;
+        }
+
+        button {
+            width: auto;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+
+        .btnContainer{
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
     }
 </style>
-
+</head>
 <body>
 
 <div class="container">
     <h1>Solar Panel Defect Detection - Prediction</h1>
 
     <div class="form-group">
-        <label for="image">Select Image:</label>
+        <label for="image" style="margin-bottom: 0.8rem;">Select Image:</label>
         <label class="file-label" for="image" id="fileLabel">Choose File</label>
         <input type="file" id="image" accept="image/*" onchange="updateLabel(this)">
     </div>
 
-    <button id="predictResult">Prediction</button>
-    <button id="clearForm">Clear</button>
-    <a href="/login"><button>Back</button></a>
+    <div class="btnContainer">
+        <button id="predictResult" aria-label="Predict Result">Prediction</button>
+        <button id="clearForm" aria-label="Clear Form">Clear</button>
+        <a href="/login"><button aria-label="Go Back">Back</button></a>
+    </div>
+
+
+    <div class="loading" id="loading">Processing, please wait...</div>
 
     <div class="result-container" id="resultContainer" style="display: none;">
         <div class="image-preview" id="imagePreview"></div>
@@ -118,58 +151,67 @@
     }
 
     document.getElementById("predictResult").addEventListener("click", function() {
-    var fileInput = document.getElementById("image");
-    var file = fileInput.files[0]; // Get the selected file
-    if (file) {
-        var formData = new FormData();
-        formData.append("image", file); // Append the file to FormData
-        fetch('/test', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            displayResult(file, data.prediction);
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
-    } else {
-        alert("Please select an image.");
+        const fileInput = document.getElementById("image");
+        const file = fileInput.files[0];
+        const loading = document.getElementById("loading");
+        
+        if (file) {
+            if (!file.type.startsWith('image/')) {
+                alert("Please upload a valid image file.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("image", file);
+            loading.style.display = "block";
+            
+            fetch('/test', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                displayResult(file, data.prediction);
+                loading.style.display = "none";
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("An error occurred. Please try again.");
+                loading.style.display = "none";
+            });
+        } else {
+            alert("Please select an image.");
+        }
+    });
+
+    document.getElementById("clearForm").addEventListener("click", function() {
+        const fileInput = document.getElementById("image");
+        fileInput.value = "";
+        updateLabel(fileInput);
+        hideResult();
+    });
+
+    function displayResult(imageFile, prediction) {
+        const resultContainer = document.getElementById("resultContainer");
+        const imagePreview = document.getElementById("imagePreview");
+        const predictionElement = document.getElementById("prediction");
+
+        const img = document.createElement("img");
+        img.src = URL.createObjectURL(imageFile);
+        img.alt = "Uploaded Image Preview";
+        imagePreview.innerHTML = "";
+        imagePreview.appendChild(img);
+
+        predictionElement.textContent = "Prediction: " + prediction;
+        predictionElement.style.fontWeight = "bold";
+
+        resultContainer.style.display = "block";
     }
-});
 
-document.getElementById("clearForm").addEventListener("click", function() {
-    var fileInput = document.getElementById("image");
-    fileInput.value = ""; // Clear the file input field
-    updateLabel(fileInput); // Update label text
-    hideResult();
-});
-
-function displayResult(imageFile, prediction) {
-    const resultContainer = document.getElementById("resultContainer");
-    const imagePreview = document.getElementById("imagePreview");
-    const predictionElement = document.getElementById("prediction");
-
-    // Create image element to display image preview
-    const img = document.createElement("img");
-    img.src = URL.createObjectURL(imageFile);
-    imagePreview.innerHTML = "";
-    imagePreview.appendChild(img);
-
-    // Display prediction
-    predictionElement.textContent = "Prediction: " + prediction;
-    predictionElement.style.fontWeight = "bold";
-
-    // Show result container
-    resultContainer.style.display = "block";
-}
-
-function hideResult() {
-    const resultContainer = document.getElementById("resultContainer");
-    resultContainer.style.display = "none";
-}
-
+    function hideResult() {
+        const resultContainer = document.getElementById("resultContainer");
+        resultContainer.style.display = "none";
+    }
 </script>
 
 </body>
